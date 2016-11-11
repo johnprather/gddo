@@ -578,13 +578,15 @@ func serveHome(resp http.ResponseWriter, req *http.Request) error {
 			return nil
 		}
 	}
-
+	log.Println("About to pull new appengine context")
 	ctx := appengine.NewContext(req)
+	log.Println("About to perform database search")
 	pkgs, err = database.Search(ctx, q)
 	if err != nil {
 		return err
 	}
 
+	log.Println("About to log top 10 packages we've served")
 	if gceLogger != nil {
 		// Log up to top 10 packages we served upon a search.
 		logPkgs := pkgs
@@ -593,7 +595,7 @@ func serveHome(resp http.ResponseWriter, req *http.Request) error {
 		}
 		gceLogger.LogEvent(resp, req, logPkgs)
 	}
-
+	log.Println("About to return serveHome")
 	return executeTemplate(resp, "results"+templateExt(req), http.StatusOK, nil,
 		map[string]interface{}{"q": q, "pkgs": pkgs})
 }
@@ -624,11 +626,13 @@ func logError(req *http.Request, err error, rv interface{}) {
 }
 
 func serveAPISearch(resp http.ResponseWriter, req *http.Request) error {
+	fmt.Println("Started serveAPISearch")
 	q := strings.TrimSpace(req.Form.Get("q"))
 
 	var pkgs []database.Package
 
 	if gosrc.IsValidRemotePath(q) || (strings.Contains(q, "/") && gosrc.IsGoRepoPath(q)) {
+		fmt.Println("it's a remote/repo request")
 		pdoc, _, err := getDoc(q, apiRequest)
 		if e, ok := err.(gosrc.NotFoundError); ok && e.Redirect != "" {
 			pdoc, _, err = getDoc(e.Redirect, robotRequest)
@@ -639,6 +643,7 @@ func serveAPISearch(resp http.ResponseWriter, req *http.Request) error {
 	}
 
 	if pkgs == nil {
+		fmt.Println("About to search database")
 		var err error
 		ctx := appengine.NewContext(req)
 		pkgs, err = database.Search(ctx, q)
@@ -646,7 +651,7 @@ func serveAPISearch(resp http.ResponseWriter, req *http.Request) error {
 			return err
 		}
 	}
-
+	fmt.Println("Assembling results")
 	var data = struct {
 		Results []database.Package `json:"results"`
 	}{
