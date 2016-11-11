@@ -8,12 +8,14 @@
 package doc
 
 import (
-	"github.com/golang/gddo/gosrc"
 	"go/doc"
 	"net/http"
 	"strings"
+
+	"github.com/johnprather/gddo/gosrc"
 )
 
+// Get needs a comment
 func Get(client *http.Client, importPath string, etag string) (*Package, error) {
 
 	const versionPrefix = PackageVersion + "-"

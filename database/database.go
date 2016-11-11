@@ -51,10 +51,11 @@ import (
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/search"
 
-	"github.com/golang/gddo/doc"
-	"github.com/golang/gddo/gosrc"
+	"github.com/johnprather/gddo/doc"
+	"github.com/johnprather/gddo/gosrc"
 )
 
+// Database struct of redis info
 type Database struct {
 	Pool interface {
 		Get() redis.Conn
@@ -176,7 +177,7 @@ var putScript = redis.NewScript(0, `
     for term, x in pairs(update) do
         if x == 1 then
             redis.call('SREM', 'index:' .. term, id)
-        elseif x == 2 then 
+        elseif x == 2 then
             redis.call('SADD', 'index:' .. term, id)
         end
     end
@@ -280,17 +281,17 @@ func (db *Database) Put(pdoc *doc.Package, nextCrawl time.Time, hide bool) error
 	ctx := bgCtx()
 
 	if score > 0 {
-		if err := PutIndex(ctx, pdoc, id, score, n); err != nil {
+		if err = PutIndex(ctx, pdoc, id, score, n); err != nil {
 			log.Printf("Cannot put %q in index: %v", pdoc.ImportPath, err)
 		}
 
 		if old != nil {
-			if err := updateImportsIndex(c, ctx, old, pdoc); err != nil {
+			if err = updateImportsIndex(c, ctx, old, pdoc); err != nil {
 				return err
 			}
 		}
 	} else {
-		if err := deleteIndex(ctx, id); err != nil {
+		if err = deleteIndex(ctx, id); err != nil {
 			return err
 		}
 	}
@@ -361,7 +362,7 @@ func updateImportsIndex(c redis.Conn, ctx context.Context, oldDoc, newDoc *doc.P
 	// For each import change, re-index that package with updated NumImported.
 	// In practice this should not happen often and when it does, the changes are
 	// likely to be a small amount.
-	for p, _ := range changes {
+	for p := range changes {
 		id, n, err := pkgIDAndImportCount(c, p)
 		if err != nil {
 			return err
@@ -419,6 +420,7 @@ var bumpCrawlScript = redis.NewScript(0, `
     end
 `)
 
+// BumpCrawl needs a comment
 func (db *Database) BumpCrawl(projectRoot string) error {
 	c := db.Pool.Get()
 	defer c.Close()
@@ -451,13 +453,13 @@ var getDocScript = redis.NewScript(0, `
     end
 
     local nextCrawl = redis.call('HGET', 'pkg:' .. id, 'crawl')
-    if not nextCrawl then 
+    if not nextCrawl then
         nextCrawl = redis.call('ZSCORE', 'nextCrawl', id)
         if not nextCrawl then
             nextCrawl = 0
         end
     end
-    
+
     return {gob, nextCrawl}
 `)
 
@@ -472,7 +474,7 @@ func (db *Database) getDoc(c redis.Conn, path string) (*doc.Package, time.Time, 
 	var p []byte
 	var t int64
 
-	if _, err := redis.Scan(r, &p, &t); err != nil {
+	if _, err = redis.Scan(r, &p, &t); err != nil {
 		return nil, time.Time{}, err
 	}
 
@@ -482,7 +484,7 @@ func (db *Database) getDoc(c redis.Conn, path string) (*doc.Package, time.Time, 
 	}
 
 	var pdoc doc.Package
-	if err := gob.NewDecoder(bytes.NewReader(p)).Decode(&pdoc); err != nil {
+	if err = gob.NewDecoder(bytes.NewReader(p)).Decode(&pdoc); err != nil {
 		return nil, time.Time{}, err
 	}
 
@@ -574,6 +576,7 @@ func (db *Database) Get(path string) (*doc.Package, []Package, time.Time, error)
 	return pdoc, subdirs, nextCrawl, nil
 }
 
+// GetDoc needs a comment
 func (db *Database) GetDoc(path string) (*doc.Package, time.Time, error) {
 	c := db.Pool.Get()
 	defer c.Close()
@@ -612,7 +615,7 @@ func (db *Database) Delete(path string) error {
 	if err != nil {
 		return err
 	}
-	if err := deleteIndex(ctx, id); err != nil {
+	if err = deleteIndex(ctx, id); err != nil {
 		return err
 	}
 
@@ -654,22 +657,27 @@ func (db *Database) getPackages(key string, all bool) ([]Package, error) {
 	return packages(reply, all)
 }
 
+// GoIndex needs a comment
 func (db *Database) GoIndex() ([]Package, error) {
 	return db.getPackages("index:project:go", false)
 }
 
+// GoSubrepoIndex needs a comment
 func (db *Database) GoSubrepoIndex() ([]Package, error) {
 	return db.getPackages("index:project:subrepo", false)
 }
 
+// Index needs a comment
 func (db *Database) Index() ([]Package, error) {
 	return db.getPackages("index:all:", false)
 }
 
+// Project needs a comment
 func (db *Database) Project(projectRoot string) ([]Package, error) {
 	return db.getPackages("index:project:"+normalizeProjectRoot(projectRoot), true)
 }
 
+// AllPackages needs a comment
 func (db *Database) AllPackages() ([]Package, error) {
 	c := db.Pool.Get()
 	defer c.Close()
@@ -711,6 +719,7 @@ var packagesScript = redis.NewScript(0, `
     return result
 `)
 
+// Packages needs a comment
 func (db *Database) Packages(paths []string) ([]Package, error) {
 	var args []interface{}
 	for _, p := range paths {
@@ -727,16 +736,19 @@ func (db *Database) Packages(paths []string) ([]Package, error) {
 	return pkgs, err
 }
 
+// ImporterCount needs a comment
 func (db *Database) ImporterCount(path string) (int, error) {
 	c := db.Pool.Get()
 	defer c.Close()
 	return redis.Int(c.Do("SCARD", "index:import:"+path))
 }
 
+// Importers needs a comment
 func (db *Database) Importers(path string) ([]Package, error) {
 	return db.getPackages("index:import:"+path, false)
 }
 
+// Block needs a comment
 func (db *Database) Block(root string) error {
 	c := db.Pool.Get()
 	defer c.Close()
@@ -769,6 +781,7 @@ var isBlockedScript = redis.NewScript(0, `
     return  0
 `)
 
+// IsBlocked needs a comment
 func (db *Database) IsBlocked(path string) (bool, error) {
 	c := db.Pool.Get()
 	defer c.Close()
@@ -787,6 +800,7 @@ func (p byScore) Len() int           { return len(p) }
 func (p byScore) Less(i, j int) bool { return p[j].Score < p[i].Score }
 func (p byScore) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
+// Query needs a comment
 func (db *Database) Query(q string) ([]Package, error) {
 	terms := parseQuery(q)
 	if len(terms) == 0 {
@@ -858,6 +872,7 @@ func (db *Database) Query(q string) ([]Package, error) {
 	return pkgs, nil
 }
 
+// PackageInfo needs a comment
 type PackageInfo struct {
 	PDoc  *doc.Package
 	Score float64
@@ -904,7 +919,7 @@ func (db *Database) Do(f func(*PackageInfo) error) error {
 				synopsis string
 			)
 
-			if _, err := redis.Scan(values, &p, &pi.Score, &pi.Kind, &path, &terms, &synopsis); err != nil {
+			if _, err = redis.Scan(values, &p, &pi.Score, &pi.Kind, &path, &terms, &synopsis); err != nil {
 				return err
 			}
 
@@ -945,11 +960,15 @@ var importGraphScript = redis.NewScript(0, `
 type DepLevel int
 
 const (
-	ShowAllDeps      DepLevel = iota // show all dependencies
-	HideStandardDeps                 // don't show dependencies of standard libraries
-	HideStandardAll                  // don't show standard libraries at all
+	// ShowAllDeps shows all dependencies
+	ShowAllDeps DepLevel = iota
+	// HideStandardDeps doesn't show dependencies of standard libraries
+	HideStandardDeps
+	// HideStandardAll doesn't show standard libraries at all
+	HideStandardAll
 )
 
+// ImportGraph needs a comment
 func (db *Database) ImportGraph(pdoc *doc.Package, level DepLevel) ([]Package, [][2]int, error) {
 
 	// This breadth-first traversal of the package's dependencies uses the
@@ -1010,6 +1029,7 @@ func (db *Database) ImportGraph(pdoc *doc.Package, level DepLevel) ([]Package, [
 	return nodes, edges, nil
 }
 
+// PutGob needs a comment
 func (db *Database) PutGob(key string, value interface{}) error {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(value); err != nil {
@@ -1021,6 +1041,7 @@ func (db *Database) PutGob(key string, value interface{}) error {
 	return err
 }
 
+// GetGob needs a comment
 func (db *Database) GetGob(key string, value interface{}) error {
 	c := db.Pool.Get()
 	defer c.Close()
@@ -1066,6 +1087,7 @@ func (db *Database) incrementPopularScoreInternal(path string, delta float64, t 
 	return err
 }
 
+// IncrementPopularScore needs a comment
 func (db *Database) IncrementPopularScore(path string) error {
 	return db.incrementPopularScoreInternal(path, 1, time.Now())
 }
@@ -1116,6 +1138,7 @@ func (db *Database) PopularWithScores() ([]Package, error) {
 	return pkgs, err
 }
 
+// PopNewCrawl needs a comment
 func (db *Database) PopNewCrawl() (string, bool, error) {
 	c := db.Pool.Get()
 	defer c.Close()
@@ -1133,6 +1156,7 @@ func (db *Database) PopNewCrawl() (string, bool, error) {
 	return path, len(subdirs) > 0, err
 }
 
+// AddBadCrawl needs a comment
 func (db *Database) AddBadCrawl(path string) error {
 	c := db.Pool.Get()
 	defer c.Close()

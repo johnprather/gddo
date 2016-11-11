@@ -25,9 +25,9 @@ import (
 	ttemp "text/template"
 	"time"
 
-	"github.com/golang/gddo/doc"
-	"github.com/golang/gddo/gosrc"
-	"github.com/golang/gddo/httputil"
+	"github.com/johnprather/gddo/doc"
+	"github.com/johnprather/gddo/gosrc"
+	"github.com/johnprather/gddo/httputil"
 )
 
 var cacheBusters httputil.CacheBusters

@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/logging"
-	"github.com/golang/gddo/database"
+	"github.com/johnprather/gddo/database"
 )
 
 // newGCELogger returns a handler that wraps h but logs each request
@@ -23,6 +23,7 @@ func newGCELogger(cli *logging.Logger) *GCELogger {
 	return &GCELogger{cli}
 }
 
+// GCELogger needs a comment
 type GCELogger struct {
 	cli *logging.Logger
 }

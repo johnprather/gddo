@@ -11,7 +11,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/golang/gddo/doc"
+	"github.com/johnprather/gddo/doc"
 )
 
 var indexTests = []struct {

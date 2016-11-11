@@ -22,7 +22,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/golang/gddo/gosrc"
+	"github.com/johnprather/gddo/gosrc"
 )
 
 func startsWithUppercase(s string) bool {
@@ -151,6 +151,7 @@ type builder struct {
 	buf      []byte // scratch space for printNode method.
 }
 
+// Value needs a comment
 type Value struct {
 	Decl Code
 	Pos  Pos
@@ -169,6 +170,7 @@ func (b *builder) values(vdocs []*doc.Value) []*Value {
 	return result
 }
 
+// Note needs a comment
 type Note struct {
 	Pos  Pos
 	UID  string
@@ -199,6 +201,7 @@ func (b *builder) notes(gnotes map[string][]*doc.Note) map[string][]*Note {
 	return notes
 }
 
+// Example needs a comment
 type Example struct {
 	Name   string
 	Doc    string
@@ -249,6 +252,7 @@ func (b *builder) getExamples(name string) []*Example {
 	return docs
 }
 
+// Func needs a comment
 type Func struct {
 	Decl     Code
 	Pos      Pos
@@ -284,6 +288,7 @@ func (b *builder) funcs(fdocs []*doc.Func) []*Func {
 	return result
 }
 
+// Type needs a comment
 type Type struct {
 	Doc      string
 	Name     string
@@ -354,11 +359,13 @@ func simpleImporter(imports map[string]*ast.Object, path string) (*ast.Object, e
 	return nil, errors.New("package not found")
 }
 
+// File needs a comment
 type File struct {
 	Name string
 	URL  string
 }
 
+// Pos needs a comment
 type Pos struct {
 	Line int32  // 0 if not valid.
 	N    uint16 // number of lines - 1
@@ -375,6 +382,7 @@ type source struct {
 // PackageVersion is modified when previously stored packages are invalid.
 const PackageVersion = "8"
 
+// Package needs a comment
 type Package struct {
 	// The import path for this package.
 	ImportPath string

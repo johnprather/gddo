@@ -18,9 +18,10 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/search"
 
-	"github.com/golang/gddo/doc"
+	"github.com/johnprather/gddo/doc"
 )
 
+// Load needs a comment
 func (p *Package) Load(fields []search.Field, meta *search.DocumentMetadata) error {
 	for _, f := range fields {
 		switch f.Name {
@@ -61,6 +62,7 @@ func (p *Package) Load(fields []search.Field, meta *search.DocumentMetadata) err
 	return nil
 }
 
+// Save needs a comment
 func (p *Package) Save() ([]search.Field, *search.DocumentMetadata, error) {
 	fields := []search.Field{
 		{Name: "Name", Value: search.Atom(p.Name)},

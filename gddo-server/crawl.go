@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/gddo/doc"
-	"github.com/golang/gddo/gosrc"
+	"github.com/johnprather/gddo/doc"
+	"github.com/johnprather/gddo/gosrc"
 )
 
 var testdataPat = regexp.MustCompile(`/testdata(?:/|$)`)
@@ -78,7 +78,7 @@ func crawlDoc(source string, importPath string, pdoc *doc.Package, hasSubdirs bo
 
 	if err == nil {
 		message = append(message, "put:", pdoc.Etag)
-		if err := put(pdoc, nextCrawl); err != nil {
+		if err = put(pdoc, nextCrawl); err != nil {
 			log.Println(err)
 		}
 		return pdoc, nil
@@ -89,27 +89,26 @@ func crawlDoc(source string, importPath string, pdoc *doc.Package, hasSubdirs bo
 			}
 			message = append(message, "archive", e)
 			pdoc.Status = e.Status
-			if err := db.Put(pdoc, nextCrawl, false); err != nil {
+			if err = db.Put(pdoc, nextCrawl, false); err != nil {
 				log.Printf("ERROR db.Put(%q): %v", importPath, err)
 			}
 		} else {
 			// Touch the package without updating and move on to next one.
 			message = append(message, "touch")
-			if err := db.SetNextCrawl(importPath, nextCrawl); err != nil {
+			if err = db.SetNextCrawl(importPath, nextCrawl); err != nil {
 				log.Printf("ERROR db.SetNextCrawl(%q): %v", importPath, err)
 			}
 		}
 		return pdoc, nil
 	} else if e, ok := err.(gosrc.NotFoundError); ok {
 		message = append(message, "notfound:", e)
-		if err := db.Delete(importPath); err != nil {
+		if err = db.Delete(importPath); err != nil {
 			log.Printf("ERROR db.Delete(%q): %v", importPath, err)
 		}
 		return nil, e
-	} else {
-		message = append(message, "ERROR:", err)
-		return nil, err
 	}
+	message = append(message, "ERROR:", err)
+	return nil, err
 }
 
 func put(pdoc *doc.Package, nextCrawl time.Time) error {

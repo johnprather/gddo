@@ -8,13 +8,16 @@ package main
 
 import (
 	"flag"
+
+	"github.com/johnprather/gddo/doc"
+
 	"log"
 	"time"
 
 	"google.golang.org/appengine"
 
-	"github.com/golang/gddo/database"
-	"github.com/golang/gddo/gosrc"
+	"github.com/johnprather/gddo/database"
+	"github.com/johnprather/gddo/gosrc"
 )
 
 var backgroundTasks = []*struct {
@@ -60,15 +63,20 @@ func runBackgroundTasks() {
 }
 
 func doCrawl() error {
+	var importPath string
+	var hasSubdirs bool
+	var err error
+	var pdoc *doc.Package
 	// Look for new package to crawl.
-	importPath, hasSubdirs, err := db.PopNewCrawl()
+	importPath, hasSubdirs, err = db.PopNewCrawl()
 	if err != nil {
 		log.Printf("db.PopNewCrawl() returned error %v", err)
 		return nil
 	}
 	if importPath != "" {
-		if pdoc, err := crawlDoc("new", importPath, nil, hasSubdirs, time.Time{}); pdoc == nil && err == nil {
-			if err := db.AddBadCrawl(importPath); err != nil {
+
+		if pdoc, err = crawlDoc("new", importPath, nil, hasSubdirs, time.Time{}); pdoc == nil && err == nil {
+			if err = db.AddBadCrawl(importPath); err != nil {
 				log.Printf("ERROR db.AddBadCrawl(%q): %v", importPath, err)
 			}
 		}

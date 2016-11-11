@@ -17,7 +17,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/aetest"
 
-	"github.com/golang/gddo/doc"
+	"github.com/johnprather/gddo/doc"
 )
 
 func newDB(t *testing.T) *Database {
@@ -190,11 +190,11 @@ func TestPutGet(t *testing.T) {
 	c.Send("DEL", "block")
 	c.Send("DEL", "popular:0")
 	c.Send("DEL", "newCrawl")
-	keys, err := redis.Values(c.Do("HKEYS", "ids"))
+	keys, _ := redis.Values(c.Do("HKEYS", "ids"))
 	for _, key := range keys {
 		t.Errorf("unexpected id %s", key)
 	}
-	keys, err = redis.Values(c.Do("KEYS", "*"))
+	keys, _ = redis.Values(c.Do("KEYS", "*"))
 	for _, key := range keys {
 		t.Errorf("unexpected key %s", key)
 	}

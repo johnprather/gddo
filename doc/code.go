@@ -70,33 +70,36 @@ var predeclared = map[string]int{
 	"recover": predeclaredFunction,
 }
 
+// AnnotationKind needs a comment
 type AnnotationKind int16
 
 const (
-	// Link to export in package specified by Paths[PathIndex] with fragment
+	// LinkAnnotation to export in package specified by Paths[PathIndex] with fragment
 	// Text[strings.LastIndex(Text[Pos:End], ".")+1:End].
 	LinkAnnotation AnnotationKind = iota
 
-	// Anchor with name specified by Text[Pos:End] or typeName + "." +
+	// AnchorAnnotation with name specified by Text[Pos:End] or typeName + "." +
 	// Text[Pos:End] for type declarations.
 	AnchorAnnotation
 
-	// Comment.
+	// CommentAnnotation needs a comment
 	CommentAnnotation
 
-	// Link to package specified by Paths[PathIndex].
+	// PackageLinkAnnotation Link to package specified by Paths[PathIndex].
 	PackageLinkAnnotation
 
-	// Link to builtin entity with name Text[Pos:End].
+	// BuiltinAnnotation Link to builtin entity with name Text[Pos:End].
 	BuiltinAnnotation
 )
 
+// Annotation needs a comment
 type Annotation struct {
 	Pos, End  int32
 	Kind      AnnotationKind
 	PathIndex int16
 }
 
+// Code needs a comment
 type Code struct {
 	Text        string
 	Annotations []Annotation

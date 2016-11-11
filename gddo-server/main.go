@@ -34,10 +34,10 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 
-	"github.com/golang/gddo/database"
-	"github.com/golang/gddo/doc"
-	"github.com/golang/gddo/gosrc"
-	"github.com/golang/gddo/httputil"
+	"github.com/johnprather/gddo/database"
+	"github.com/johnprather/gddo/doc"
+	"github.com/johnprather/gddo/gosrc"
+	"github.com/johnprather/gddo/httputil"
 )
 
 const (
@@ -104,8 +104,9 @@ func getDoc(path string, requestType int) (*doc.Package, []database.Package, err
 
 	c := make(chan crawlResult, 1)
 	go func() {
-		pdoc, err := crawlDoc("web  ", path, pdoc, len(pkgs) > 0, nextCrawl)
-		c <- crawlResult{pdoc, err}
+		var pDoc *doc.Package
+		pDoc, err = crawlDoc("web  ", path, pdoc, len(pkgs) > 0, nextCrawl)
+		c <- crawlResult{pDoc, err}
 	}()
 
 	timeout := *getTimeout
@@ -242,7 +243,7 @@ func servePackage(resp http.ResponseWriter, req *http.Request) error {
 	if e, ok := err.(gosrc.NotFoundError); ok && e.Redirect != "" {
 		// To prevent dumb clients from following redirect loops, respond with
 		// status 404 if the target document is not found.
-		if _, _, err := getDoc(e.Redirect, requestType); gosrc.IsNotFound(err) {
+		if _, _, err = getDoc(e.Redirect, requestType); gosrc.IsNotFound(err) {
 			return &httpError{status: http.StatusNotFound}
 		}
 		u := "/" + e.Redirect
@@ -263,7 +264,8 @@ func servePackage(resp http.ResponseWriter, req *http.Request) error {
 		if len(pkgs) == 0 {
 			return &httpError{status: http.StatusNotFound}
 		}
-		pdocChild, _, _, err := db.Get(pkgs[0].Path)
+		var pdocChild *doc.Package
+		pdocChild, _, _, err = db.Get(pkgs[0].Path)
 		if err != nil {
 			return err
 		}
@@ -297,7 +299,7 @@ func servePackage(resp http.ResponseWriter, req *http.Request) error {
 			!pdoc.IsCmd &&
 			len(pdoc.Errors) == 0 &&
 			!popularLinkReferral(req) {
-			if err := db.IncrementPopularScore(pdoc.ImportPath); err != nil {
+			if err = db.IncrementPopularScore(pdoc.ImportPath); err != nil {
 				log.Printf("ERROR db.IncrementPopularScore(%s): %v", pdoc.ImportPath, err)
 			}
 		}
@@ -427,7 +429,7 @@ func serveRefresh(resp http.ResponseWriter, req *http.Request) error {
 	}
 	c := make(chan error, 1)
 	go func() {
-		_, err := crawlDoc("rfrsh", importPath, nil, len(pkgs) > 0, time.Time{})
+		_, err = crawlDoc("rfrsh", importPath, nil, len(pkgs) > 0, time.Time{})
 		c <- err
 	}()
 	select {
@@ -543,13 +545,16 @@ func popular() ([]database.Package, error) {
 }
 
 func serveHome(resp http.ResponseWriter, req *http.Request) error {
+	var pkgs []database.Package
+	var err error
+	var pdoc *doc.Package
 	if req.URL.Path != "/" {
 		return servePackage(resp, req)
 	}
 
 	q := strings.TrimSpace(req.Form.Get("q"))
 	if q == "" {
-		pkgs, err := popular()
+		pkgs, err = popular()
 		if err != nil {
 			return err
 		}
@@ -563,7 +568,7 @@ func serveHome(resp http.ResponseWriter, req *http.Request) error {
 	}
 
 	if gosrc.IsValidRemotePath(q) || (strings.Contains(q, "/") && gosrc.IsGoRepoPath(q)) {
-		pdoc, pkgs, err := getDoc(q, queryRequest)
+		pdoc, pkgs, err = getDoc(q, queryRequest)
 		if e, ok := err.(gosrc.NotFoundError); ok && e.Redirect != "" {
 			http.Redirect(resp, req, "/"+e.Redirect, http.StatusFound)
 			return nil
@@ -575,10 +580,11 @@ func serveHome(resp http.ResponseWriter, req *http.Request) error {
 	}
 
 	ctx := appengine.NewContext(req)
-	pkgs, err := database.Search(ctx, q)
+	pkgs, err = database.Search(ctx, q)
 	if err != nil {
 		return err
 	}
+
 	if gceLogger != nil {
 		// Log up to top 10 packages we served upon a search.
 		logPkgs := pkgs
